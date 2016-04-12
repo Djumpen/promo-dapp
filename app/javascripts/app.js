@@ -2,55 +2,67 @@ var accounts;
 var account;
 var balance;
 
-function setStatus(message) {
-  var status = document.getElementById("status");
-  status.innerHTML = message;
+//function setStatus(message) {
+//  var status = document.getElementById("status");
+//  status.innerHTML = message;
+//};
+
+function refreshBalance () {
+    var meta = MetaCoin.deployed();
+    meta.getBalance.call(account, {from: account}).then(function (value) {
+        var balance_element = document.getElementById("balance");
+        balance_element.innerHTML = value.valueOf();
+    }).catch(function (e) {
+        console.log(e);
+        //setStatus("Error getting balance; see log.");
+    });
 };
 
-function refreshBalance() {
-  var meta = MetaCoin.deployed();
+function sendCoin () {
+    var meta = MetaCoin.deployed();
 
-  meta.getBalance.call(account, {from: account}).then(function(value) {
-    var balance_element = document.getElementById("balance");
-    balance_element.innerHTML = value.valueOf();
-  }).catch(function(e) {
-    console.log(e);
-    setStatus("Error getting balance; see log.");
-  });
+    var amount = parseInt(document.getElementById("amount").value);
+    var receiver = document.getElementById("receiver").value;
+
+    setStatus("Initiating transaction... (please wait)");
+
+    meta.sendCoin(receiver, amount, {from: account}).then(function () {
+        setStatus("Transaction complete!");
+        refreshBalance();
+    }).catch(function (e) {
+        console.log(e);
+        setStatus("Error sending coin; see log.");
+    });
 };
 
-function sendCoin() {
-  var meta = MetaCoin.deployed();
+window.onload = function () {
+    web3.eth.getAccounts(function (err, accs) {
+        if (err != null) {
+            alert("There was an error fetching your accounts.");
+            return;
+        }
 
-  var amount = parseInt(document.getElementById("amount").value);
-  var receiver = document.getElementById("receiver").value;
+        if (accs.length == 0) {
+            alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
+            return;
+        }
 
-  setStatus("Initiating transaction... (please wait)");
+        accounts = accs;
+        account = accounts[0];
 
-  meta.sendCoin(receiver, amount, {from: account}).then(function() {
-    setStatus("Transaction complete!");
-    refreshBalance();
-  }).catch(function(e) {
-    console.log(e);
-    setStatus("Error sending coin; see log.");
-  });
+        document.getElementById("wallet-address").innerHTML = account;
+
+        refreshBalance();
+    });
 };
 
-window.onload = function() {
-  web3.eth.getAccounts(function(err, accs) {
-    if (err != null) {
-      alert("There was an error fetching your accounts.");
-      return;
-    }
+function userRegister () {
+    var FreepeUsers = window.FreepeUsers.deployed();
 
-    if (accs.length == 0) {
-      alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-      return;
-    }
+    var name = document.getElementById("name").value;
+    var email = document.getElementById("email").value;
 
-    accounts = accs;
-    account = accounts[0];
-
-    refreshBalance();
-  });
+    FreepeUsers.register(name, email, { from: account }).then(function (value) {
+        console.log(value)
+    });
 }
